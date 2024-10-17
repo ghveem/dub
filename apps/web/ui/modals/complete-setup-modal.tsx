@@ -1,7 +1,7 @@
-import useDomains from "@/lib/swr/use-domains";
+import useDomainsCount from "@/lib/swr/use-domains-count";
 import useLinksCount from "@/lib/swr/use-links-count";
 import useUsers from "@/lib/swr/use-users";
-import { ModalContext } from "@/ui/modals/provider";
+import { ModalContext } from "@/ui/modals/modal-provider";
 import { CheckCircleFill } from "@/ui/shared/icons";
 import { ExpandingArrow, Logo, Modal } from "@dub/ui";
 import Link from "next/link";
@@ -24,23 +24,23 @@ function CompleteSetupModal({
 }) {
   const { slug } = useParams() as { slug: string };
 
-  const { verified } = useDomains();
-  const { data: count } = useLinksCount();
+  const { data: domainsCount } = useDomainsCount();
+  const { data: linksCount } = useLinksCount<number>({ ignoreParams: true });
   const { users } = useUsers();
   const { users: invites } = useUsers({ invites: true });
-  const { setShowAddEditLinkModal } = useContext(ModalContext);
+  const { setShowLinkBuilder } = useContext(ModalContext);
 
   const tasks = useMemo(() => {
     return [
       {
-        display: "Configure your custom domain",
-        cta: `/${slug}/domains`,
-        checked: verified,
+        display: "Set up your custom domain",
+        cta: `/${slug}/settings/domains`,
+        checked: domainsCount && domainsCount > 0,
       },
       {
         display: "Create or import your links",
         cta: `/${slug}`,
-        checked: count > 0,
+        checked: linksCount > 0,
       },
       {
         display: "Invite your teammates",
@@ -48,7 +48,7 @@ function CompleteSetupModal({
         checked: (users && users.length > 1) || (invites && invites.length > 0),
       },
     ];
-  }, [slug, verified, count]);
+  }, [slug, domainsCount, linksCount, users, invites]);
 
   return (
     <Modal
@@ -88,7 +88,7 @@ function CompleteSetupModal({
                 onClick={() => {
                   setShowCompleteSetupModal(false);
                   display === "Create or import your links" &&
-                    setShowAddEditLinkModal(true);
+                    setShowLinkBuilder(true);
                 }}
               >
                 {contents}
